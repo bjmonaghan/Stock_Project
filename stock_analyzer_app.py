@@ -49,11 +49,16 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                 'RSI_below_70': 0.25,
                 'MACD_above_signal': 0.3,
                 'Close_above_BB_lower': 0.15,
+                'RSI_above_70': -0.2,  # Sell Indicator
+                'MACD_below_signal': -0.2, # Sell Indicator
             }
 
             if high_volatility:
                 weights['RSI_below_70'] *= 1.2
                 weights['Close_above_BB_lower'] *= 0.8
+                weights['RSI_above_70'] *= 1.2 # Increase weight in high volatility
+                weights['MACD_below_signal'] *= 1.2
+                
 
             score = 0
             conditions = {
@@ -61,12 +66,16 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                 'RSI_below_70': history['RSI'].iloc[-1] < 70,
                 'MACD_above_signal': history['MACD'].iloc[-1] > history['MACD_signal'].iloc[-1],
                 'Close_above_BB_lower': history['Close'].iloc[-1] > history['BB_lower'].iloc[-1],
+                'RSI_above_70': history['RSI'].iloc[-1] > 70, # Sell condition
+                'MACD_below_signal': history['MACD'].iloc[-1] < history['MACD_signal'].iloc[-1], # Sell Condition
             }
             condition_explanations = {
                 'SMA_20_above_SMA_50': "Met" if conditions['SMA_20_above_SMA_50'] else "Not Met",
                 'RSI_below_70': "Met" if conditions['RSI_below_70'] else "Not Met",
                 'MACD_above_signal': "Met" if conditions['MACD_above_signal'] else "Not Met",
                 'Close_above_BB_lower': "Met" if conditions['Close_above_BB_lower'] else "Not Met",
+                'RSI_above_70': "Met" if conditions['RSI_above_70'] else "Not Met",
+                'MACD_below_signal': "Met" if conditions['MACD_below_signal'] else "Not Met",
             }
 
             for condition, value in conditions.items():
@@ -74,17 +83,20 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     score += weights[condition]
 
             buy_threshold = 0.7
+            sell_threshold = 0.3  # Add a sell threshold
 
             if high_volatility:
                 buy_threshold *= 1.1
+                sell_threshold *= 0.9 # Reduce sell threshold in high volatility
 
-            if 0.6 <= score < buy_threshold:
-                signal = "Hold"
-            elif score >= buy_threshold:
+            if score >= buy_threshold:
                 signal = "Buy"
+            elif score <= sell_threshold:
+                signal = "Sell"
+            elif 0.6 <= score < buy_threshold: #original was elif 0.6 <= score < buy_threshold:
+                signal = "Hold"
             else:
-                signal = "Don't Buy"
-
+                signal = "Don't Buy" # changed from original signal = "Don't Buy"
 
             last_data = history.tail(1)
             data_table = pd.DataFrame(
@@ -100,12 +112,15 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     'BB_lower': last_data['BB_lower'].values,
                     'ATR': last_data['ATR'].values,
                     'Buy Score': score,
-                    'Buy/Don\'t Buy/Hold': signal,
+                    'Buy/Don\'t Buy/Hold/Sell': signal, # changed name
                     'SMA_20_above_SMA_50_Explanation': condition_explanations['SMA_20_above_SMA_50'],
                     'RSI_below_70_Explanation': condition_explanations['RSI_below_70'],
                     'MACD_above_signal_Explanation': condition_explanations['MACD_above_signal'],
                     'Close_above_BB_lower_Explanation': condition_explanations['Close_above_BB_lower'],
+                    'RSI_above_70_Explanation': condition_explanations['RSI_above_70'],
+                    'MACD_below_signal_Explanation': condition_explanations['MACD_below_signal'],
                     "High Volatility Don't Buy": "Yes" if high_volatility and signal == "Don't Buy" else "No",
+                    "High Volatility Sell": "Yes" if high_volatility and signal == "Sell" else "No",
                 },
                 index=[ticker],
             )
