@@ -9,31 +9,6 @@ from ta.momentum import rsi
 from ta.volatility import average_true_range
 
 
-def get_all_tickers():
-    """Retrieves a list of all available stock tickers and their company names."""
-    try:
-        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-        tables = pd.read_html(url)
-        sp500_table = tables[0]
-        tickers = sp500_table['Symbol'].tolist()
-
-        ticker_info = {}
-        for ticker in tickers:
-            try:
-                stock = yf.Ticker(ticker)
-                info = stock.info
-                if 'longName' in info:
-                    ticker_info[ticker] = info['longName']
-            except Exception as e:
-                print(f"Error getting info for {ticker}: {e}")
-                # Important: Handle errors *within* the loop to avoid losing other tickers
-                pass
-        return ticker_info
-    except Exception as e:
-        print(f"Error getting tickers: {e}")
-        return {}  # Return an empty dict in case of a major failure, so the app doesn't crash
-
-
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     """
     Performs complex stock analysis with a scoring system, weighted indicators, and
@@ -206,55 +181,55 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     return all_data, plots
 
 
+
 def main():
     st.title("Stock Analysis App")
 
-    ticker_info = get_all_tickers()
-    print(f"Ticker Info: {ticker_info}")  # Debug: Check the structure and content of ticker_info
-    ticker_options = [f"{name} ({ticker})" for ticker, name in ticker_info.items()]
-
-    selected_options = st.multiselect("Select stocks:", ticker_options)
-    print(f"Selected options: {selected_options}") # Debug
-    selected_tickers = [option.split("(")[-1][:-1] for option in selected_options]
-    print(f"Selected tickers: {selected_tickers}") # Debug
+    # Input for the stock symbol
+    stock_symbol = st.text_input("Enter stock symbol to analyze (e.g., AAPL, GOOG):").upper()
 
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
-    if st.button("Analyze Stocks"):
-        if not selected_tickers:
-            st.warning("Please select at least one stock.")
+    if st.button("Analyze Stock"):
+        if not stock_symbol:
+            st.warning("Please enter a stock symbol.")
             return
 
         all_data, plots = analyze_stocks_complex_with_scoring_consolidated(
-            selected_tickers, period=period)
+            [stock_symbol], period=period)  # Pass a list containing the single ticker
 
-        st.header("Consolidated Analysis:")
-        st.dataframe(all_data)
+        st.header("Analysis Results:")
+        if not all_data.empty:
+            st.dataframe(all_data)
 
-        if export_option != "None":
-            if export_option in ["CSV", "All (CSV and Plots)"]:
-                csv_file = all_data.to_csv().encode('utf-8')
-                st.download_button(label="Download Consolidated Data (CSV)",
-                                    data=csv_file,
-                                    file_name="consolidated_stock_analysis.csv",
-                                    mime="text/csv")
+            # Exporting
+            if export_option != "None":
+                if export_option in ["CSV", "All (CSV and Plots)"]:
+                    csv_file = all_data.to_csv().encode('utf-8')
+                    st.download_button(label="Download Analysis Data (CSV)",
+                                        data=csv_file,
+                                        file_name=f"{stock_symbol}_analysis.csv",
+                                        mime="text/csv")
 
-            if export_option == "All (CSV and Plots)":
-                for ticker, plot in plots.items():
-                    buf = io.BytesIO()
-                    plot.savefig(buf, format='png')
-                    buf.seek(0)
-                    st.download_button(label=f"Download {ticker} Analysis Plot (PNG)",
-                                        data=buf,
-                                        file_name=f"{ticker}_analysis_plot.png",
-                                        mime="image/png")
-                    plt.close(plot)
+                if export_option == "All (CSV and Plots)":
+                    for ticker, plot in plots.items():
+                        buf = io.BytesIO()
+                        plot.savefig(buf, format='png')
+                        buf.seek(0)
+                        st.download_button(label=f"Download {ticker} Analysis Plot (PNG)",
+                                            data=buf,
+                                            file_name=f"{ticker}_analysis_plot.png",
+                                            mime="image/png")
+                        plt.close(plot)
 
-        st.header("Individual Stock Plots:")
-        for ticker, plot in plots.items():
-            st.pyplot(plot)
-            plt.close(plot)
+            # Display Plots
+            st.header("Stock Plots:")
+            for ticker, plot in plots.items():
+                st.pyplot(plot)
+                plt.close(plot)
+        else:
+            st.warning(f"Could not retrieve data or an error occurred for symbol {stock_symbol}.")
 
 
 if __name__ == "__main__":
