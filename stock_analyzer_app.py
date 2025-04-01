@@ -116,6 +116,8 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             last_data = history.tail(1)
             data_table = pd.DataFrame(
                 {
+                    'Buy Score': score,
+                    'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name                    
                     'Current Price': current_price,
                     'Close': last_data['Close'].values,
                     'SMA_20': last_data['SMA_20'].values,
