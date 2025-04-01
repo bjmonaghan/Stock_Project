@@ -46,7 +46,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             info = stock.info
             current_price = info.get('currentPrice')
-            news_links = get_news_links(ticker)  # Get news links
 
             history['SMA_20'] = sma_indicator(close=history['Close'], window=20)
             history['SMA_50'] = sma_indicator(close=history['Close'], window=50)
@@ -211,7 +210,6 @@ def main():
 
         st.session_state['all_data'] = all_data  # Store in session state
         st.session_state['plots'] = plots  # Store in session state
-        st.session_state['tickers'] = tickers # store tickers
 
         st.header("Consolidated Analysis:")
         if not all_data.empty:
@@ -247,19 +245,6 @@ def main():
             st.pyplot(plot)
             plt.close(plot)
 
-        # Display News Links
-        st.header("Stock News:")
-        for ticker in st.session_state['tickers']:
-            st.subheader(f"News for {ticker}:")
-            news_links = get_news_links(ticker)
-            if news_links:
-                for item in news_links:
-                    if isinstance(item, dict) and 'title' in item and 'link' in item:
-                        st.write(f"  -  [{item['title']}]({item['link']})")
-                    else:
-                        st.write(f"  -  Invalid news item format: {item}")
-            else:
-                st.write(f"  -  No news found for {ticker}.")
     elif stock_symbols and st.button("Analyze Stocks") == False :
         st.warning(
             "Could not retrieve data or an error occurred for the entered symbols."
