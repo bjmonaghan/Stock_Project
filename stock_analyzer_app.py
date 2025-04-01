@@ -9,7 +9,32 @@ from ta.volatility import bollinger_hband, bollinger_lband
 from ta.momentum import rsi
 from ta.volatility import average_true_range
 import io  # Import io for handling file-like objects
+def get_all_tickers():
+    """Retrieves a list of all available stock tickers and their company names."""
+    try:
+        # Use a more robust method to get all tickers, as yfinance doesn't directly provide a full list.
+        # This will fetch all the tickers from a wikipedia page.
+        url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+        tables = pd.read_html(url)
+        sp500_table = tables[0]
+        tickers = sp500_table['Symbol'].tolist()
 
+        ticker_info = {}
+        for ticker in tickers:
+            try:
+                stock = yf.Ticker(ticker)
+                info = stock.info
+                if 'longName' in info:
+                    ticker_info[ticker] = info['longName']
+            except Exception as e:
+                print(f"Error getting info for {ticker}: {e}")
+                pass #Ignore errors for specific tickers.
+
+        return ticker_info
+    except Exception as e:
+        print(f"Error getting tickers: {e}")
+        return {}
+        
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     """
     Performs complex stock analysis with a scoring system, weighted indicators, and
@@ -214,16 +239,22 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 def main():
     st.title("Stock Analysis App")
 
-    # Stock selector dropdown (without default tickers)
-    all_tickers = ["PG", "HD", "IBM", "CSCO", "KO", "JNJ", "AMGN", "MRK", "CVX", "VZ"]  # Example tickers, you can modify or populate dynamically
-    selected_tickers = st.multiselect("Select stock tickers:", all_tickers) #No default tickers
+    # Get all tickers and their names
+    ticker_info = get_all_tickers()
+    ticker_options = [f"{name} ({ticker})" for ticker, name in ticker_info.items()]
+
+    # Stock selector dropdown
+    selected_options = st.multiselect("Select stocks:", ticker_options)
+
+    # Extract tickers from the selected options
+    selected_tickers = [option.split("(")[-1][:-1] for option in selected_options]
 
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
     if st.button("Analyze Stocks"):
-        if not selected_tickers: # Check if any tickers are selected
-            st.warning("Please select at least one stock ticker.")
+        if not selected_tickers:
+            st.warning("Please select at least one stock.")
             return
 
         all_data, plots = analyze_stocks_complex_with_scoring_consolidated(selected_tickers, period=period)
