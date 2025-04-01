@@ -26,11 +26,12 @@ def get_all_tickers():
                     ticker_info[ticker] = info['longName']
             except Exception as e:
                 print(f"Error getting info for {ticker}: {e}")
+                # Important: Handle errors *within* the loop to avoid losing other tickers
                 pass
         return ticker_info
     except Exception as e:
         print(f"Error getting tickers: {e}")
-        return {}
+        return {}  # Return an empty dict in case of a major failure, so the app doesn't crash
 
 
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
@@ -209,10 +210,13 @@ def main():
     st.title("Stock Analysis App")
 
     ticker_info = get_all_tickers()
+    print(f"Ticker Info: {ticker_info}")  # Debug: Check the structure and content of ticker_info
     ticker_options = [f"{name} ({ticker})" for ticker, name in ticker_info.items()]
 
     selected_options = st.multiselect("Select stocks:", ticker_options)
+    print(f"Selected options: {selected_options}") # Debug
     selected_tickers = [option.split("(")[-1][:-1] for option in selected_options]
+    print(f"Selected tickers: {selected_tickers}") # Debug
 
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
