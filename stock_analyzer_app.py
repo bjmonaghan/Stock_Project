@@ -25,7 +25,6 @@ def get_news_links(ticker):
         return []
 
 
-
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     """
     Performs complex stock analysis with a scoring system, weighted indicators, and
@@ -189,8 +188,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     return all_data, plots
 
 
-
-
 def main():
     st.title("Stock Analysis App")
 
@@ -202,70 +199,9 @@ def main():
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
-    if st.button("Analyze Stocks"):  # Changed button label
+    if st.button("Analyze Stocks"):
         if not stock_symbols:
             st.warning("Please enter at least one stock symbol.")
             return
 
-        tickers = [symbol.strip() for symbol in stock_symbols.split(",")]
-        all_data, plots = analyze_stocks_complex_with_scoring_consolidated(
-            tickers, period=period
-        )
-
-        st.header("Consolidated Analysis:")  # Changed header
-        if not all_data.empty:
-            st.dataframe(all_data)
-
-            # Exporting
-            if export_option != "None":
-                if export_option in ["CSV", "All (CSV and Plots)"]:
-                    csv_file = all_data.to_csv().encode('utf-8')
-                    st.download_button(
-                        label="Download Consolidated Data (CSV)",  # Changed label
-                        data=csv_file,
-                        file_name="consolidated_stock_analysis.csv",  # Changed filename
-                        mime="text/csv",
-                    )
-
-                if export_option == "All (CSV and Plots)":
-                    for ticker, plot in plots.items():
-                        buf = io.BytesIO()
-                        plot.savefig(buf, format='png')
-                        buf.seek(0)
-                        st.download_button(
-                            label=f"Download {ticker} Analysis Plot (PNG)",
-                            data=buf,
-                            file_name=f"{ticker}_analysis_plot.png",
-                            mime="image/png",
-                        )
-                        plt.close(plot)
-
-        # Display Plots
-        st.header("Individual Stock Plots:")  # Changed header
-        for ticker, plot in plots.items():
-            st.pyplot(plot)
-            plt.close(plot)
-
-        # Display News Links
-        st.header("Stock News:")
-        for ticker in tickers:
-            st.subheader(f"News for {ticker}:")
-            news_links = get_news_links(ticker)
-            if news_links:
-                for item in news_links:
-                    # Check if 'title' and 'link' exist in the item.
-                    if 'title' in item and 'link' in item:
-                        st.write(f"  -  [{item['title']}]({item['link']})")
-                    else:
-                        st.write("  -  Invalid news item format: Title or link missing.")  # More specific message
-            else:
-                st.write(f"  -  No news found for {ticker}.")
-        else:
-            st.warning(
-                "Could not retrieve data or an error occurred for the entered symbols."
-            )
-
-
-
-if __name__ == "__main__":
-    main()
+        tickers = [symbol.strip() for symbol in stock_symbols.split(",")
