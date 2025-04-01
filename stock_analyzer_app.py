@@ -8,6 +8,17 @@ from ta.volatility import bollinger_hband, bollinger_lband
 from ta.momentum import rsi
 from ta.volatility import average_true_range
 
+def get_news_links(ticker):
+    """
+    Fetches news links for a given stock ticker using yfinance.
+    """
+    try:
+        stock = yf.Ticker(ticker)
+        news = stock.news
+        return news
+    except Exception as e:
+        print(f"Error fetching news for {ticker}: {e}")
+        return []
 
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     """
@@ -30,6 +41,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             info = stock.info
             current_price = info.get('currentPrice')
+            news_links = get_news_links(ticker) # Get news links
 
             history['SMA_20'] = sma_indicator(close=history['Close'], window=20)
             history['SMA_50'] = sma_indicator(close=history['Close'], window=50)
@@ -101,8 +113,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             last_data = history.tail(1)
             data_table = pd.DataFrame(
                 {
-                    'Buy Score': score,
-                    'Buy/Don\'t Buy/Hold/Sell': signal, # changed name
                     'Current Price': current_price,
                     'Close': last_data['Close'].values,
                     'SMA_20': last_data['SMA_20'].values,
@@ -113,6 +123,8 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     'BB_upper': last_data['BB_upper'].values,
                     'BB_lower': last_data['BB_lower'].values,
                     'ATR': last_data['ATR'].values,
+                    'Buy Score': score,
+                    'Buy/Don\'t Buy/Hold/Sell': signal, # changed name
                     'SMA_20_above_SMA_50_Explanation': condition_explanations['SMA_20_above_SMA_50'],
                     'RSI_below_70_Explanation': condition_explanations['RSI_below_70'],
                     'MACD_above_signal_Explanation': condition_explanations['MACD_above_signal'],
@@ -222,17 +234,28 @@ def main():
                         )
                         plt.close(plot)
 
-            # Display Plots
-            st.header("Individual Stock Plots:")  # Changed header
-            for ticker, plot in plots.items():
-                st.pyplot(plot)
-                plt.close(plot)
+        # Display Plots
+        st.header("Individual Stock Plots:")  # Changed header
+        for ticker, plot in plots.items():
+            st.pyplot(plot)
+            plt.close(plot)
+
+        # Display News Links
+        st.header("Stock News:")
+        for ticker in tickers:
+            st.subheader(f"News for {ticker}:")
+            news_links = get_news_links(ticker)
+            if news_links:
+                for item in news_links:
+                    st.write(f"[{item['title']}]({item['link']})")
+            else:
+                st.write(f"No news found for {ticker}.")
         else:
             st.warning(
                 "Could not retrieve data or an error occurred for the entered symbols."
             )
 
 
+
 if __name__ == "__main__":
     main()
-
