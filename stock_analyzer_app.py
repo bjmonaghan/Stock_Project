@@ -16,6 +16,9 @@ def get_news_links(ticker):
     try:
         stock = yf.Ticker(ticker)
         news = stock.news
+        if not news:  # Check if news is empty
+            print(f"No news found for {ticker} from yfinance.")
+            return []
         return news
     except Exception as e:
         print(f"Error fetching news for {ticker}: {e}")
@@ -252,9 +255,9 @@ def main():
                 for item in news_links:
                     # Check if 'title' and 'link' exist in the item.
                     if 'title' in item and 'link' in item:
-                        st.write(f"[{item['title']}]({item['link']})")
+                        st.write(f"  -  [{item['title']}]({item['link']})")
                     else:
-                        st.write("  -  Invalid news item format.")  # Handle the case where title or link is missing.
+                        st.write("  -  Invalid news item format: Title or link missing.")  # More specific message
             else:
                 st.write(f"  -  No news found for {ticker}.")
         else:
