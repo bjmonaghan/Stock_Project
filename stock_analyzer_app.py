@@ -176,21 +176,25 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 def main():
     st.title("Stock Analysis App")
 
-    # Input for the stock symbol
-    stock_symbol = st.text_input("Enter stock symbol to analyze (e.g., AAPL, GOOG):").upper()
+    # Input for the stock symbols
+    stock_symbols = st.text_input(
+        "Enter stock symbols to analyze (comma-separated, e.g., AAPL,GOOG,MSFT):"
+    ).upper()
 
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
-    if st.button("Analyze Stock"):
-        if not stock_symbol:
-            st.warning("Please enter a stock symbol.")
+    if st.button("Analyze Stocks"):  # Changed button label
+        if not stock_symbols:
+            st.warning("Please enter at least one stock symbol.")
             return
 
+        tickers = [symbol.strip() for symbol in stock_symbols.split(",")]
         all_data, plots = analyze_stocks_complex_with_scoring_consolidated(
-            [stock_symbol], period=period)  # Pass a list containing the single ticker
+            tickers, period=period
+        )
 
-        st.header("Analysis Results:")
+        st.header("Consolidated Analysis:")  # Changed header
         if not all_data.empty:
             st.dataframe(all_data)
 
@@ -198,30 +202,37 @@ def main():
             if export_option != "None":
                 if export_option in ["CSV", "All (CSV and Plots)"]:
                     csv_file = all_data.to_csv().encode('utf-8')
-                    st.download_button(label="Download Analysis Data (CSV)",
-                                        data=csv_file,
-                                        file_name=f"{stock_symbol}_analysis.csv",
-                                        mime="text/csv")
+                    st.download_button(
+                        label="Download Consolidated Data (CSV)",  # Changed label
+                        data=csv_file,
+                        file_name="consolidated_stock_analysis.csv",  # Changed filename
+                        mime="text/csv",
+                    )
 
                 if export_option == "All (CSV and Plots)":
                     for ticker, plot in plots.items():
                         buf = io.BytesIO()
                         plot.savefig(buf, format='png')
                         buf.seek(0)
-                        st.download_button(label=f"Download {ticker} Analysis Plot (PNG)",
-                                            data=buf,
-                                            file_name=f"{ticker}_analysis_plot.png",
-                                            mime="image/png")
+                        st.download_button(
+                            label=f"Download {ticker} Analysis Plot (PNG)",
+                            data=buf,
+                            file_name=f"{ticker}_analysis_plot.png",
+                            mime="image/png",
+                        )
                         plt.close(plot)
 
             # Display Plots
-            st.header("Stock Plots:")
+            st.header("Individual Stock Plots:")  # Changed header
             for ticker, plot in plots.items():
                 st.pyplot(plot)
                 plt.close(plot)
         else:
-            st.warning(f"Could not retrieve data or an error occurred for symbol {stock_symbol}.")
+            st.warning(
+                "Could not retrieve data or an error occurred for the entered symbols."
+            )
 
 
 if __name__ == "__main__":
     main()
+
