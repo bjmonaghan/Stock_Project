@@ -30,8 +30,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             info = stock.info
             current_price = info.get('currentPrice')
-            st.write(f"Analyzing {info.get('longName', ticker)} ({ticker}):")
-            st.write(f"Current Price: {current_price}")
 
             history['SMA_20'] = sma_indicator(close=history['Close'], window=20)
             history['SMA_50'] = sma_indicator(close=history['Close'], window=50)
@@ -56,7 +54,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             if high_volatility:
                 weights['RSI_below_70'] *= 1.2
                 weights['Close_above_BB_lower'] *= 0.8
-                st.write("\nHigh Volatility Detected: Adjusting indicator weights.")
 
             score = 0
             conditions = {
@@ -80,7 +77,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             if high_volatility:
                 buy_threshold *= 1.1
-                st.write("High Volatility Detected: Adjusting buy threshold.")
 
             if 0.6 <= score < buy_threshold:
                 signal = "Hold"
@@ -89,26 +85,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             else:
                 signal = "Don't Buy"
 
-            st.write(f"\nBuy/Don't Buy/Hold Signal: {signal}")
-            st.write(f"Score: {score}")
-
-            if signal == "Buy":
-                st.write("\nBuy Signal Explanation:")
-                for condition, value in conditions.items():
-                    if value:
-                        st.write(f"- {condition}: Met")
-                    else:
-                        st.write(f"- {condition}: Not Met")
-
-            elif signal == "Don't Buy":
-                st.write("\nDon't Buy Signal Explanation:")
-                for condition, value in conditions.items():
-                    if not value:
-                        st.write(f"- {condition}: Not Met")
-            elif signal == "Hold":
-                st.write("\nHold Signal Explanation:")
-                for condition, value in conditions.items():
-                    st.write(f"- {condition}: {'Met' if value else 'Not Met'}")
 
             last_data = history.tail(1)
             data_table = pd.DataFrame(
