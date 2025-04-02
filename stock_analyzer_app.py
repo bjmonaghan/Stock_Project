@@ -9,6 +9,18 @@ from ta.momentum import rsi, stoch
 from ta.volume import OnBalanceVolumeIndicator
 from ta.utils import dropna
 
+def get_news_links(ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        news = stock.news
+        if not news:
+            print(f"No news found for {ticker} from yfinance.")
+            return []
+        return news
+    except Exception as e:
+        print(f"Error fetching news for {ticker}: {e}")
+        return []
+
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
     all_data = pd.DataFrame()
     plots = {}
@@ -171,4 +183,66 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
     return all_data, plots
 
-# ... (rest of the streamlit code remains the same)
+def main():
+    st.title("Stock Analysis App")
+
+    stock_symbols = st.text_input(
+        "Enter stock symbols to analyze (comma-separated, e.g., AAPL,GOOG,MSFT):"
+    ).upper()
+
+    period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
+    export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
+
+    if st.button("Analyze Stocks"):
+        if not stock_symbols:
+            st.warning("Please enter at least one stock symbol.")
+            return
+
+        tickers = [symbol.strip() for symbol in stock_symbols.split(",")]
+        all_data, plots = analyze_stocks_complex_with_scoring_consolidated(
+            tickers, period=period
+        )
+
+        st.session_state['all_data'] = all_data
+        st.session_state['plots'] = plots
+
+        st.header("Consolidated Analysis:")
+        if not all_data.empty:
+            st.dataframe(all_data)
+
+    if 'all_data' in st.session_state and not st.session_state['all_data'].empty:
+        if export_option != "None":
+            if export_option in ["CSV", "All (CSV and Plots)"]:
+                csv_file = st.session_state['all_data'].to_csv().encode('utf-8')
+                st.download_button(
+                    label="Download Consolidated Data (CSV)",
+                    data=csv_file,
+                    file_name="consolidated_stock_analysis.csv",
+                    mime="text/csv",
+                )
+
+            if export_option == "All (CSV and Plots)":
+                for ticker, plot in st.session_state['plots'].items():
+                    buf = io.BytesIO()
+                    plot.savefig(buf, format='png')
+                    buf.seek(0)
+                    st.download_button(
+                        label=f"Download {ticker} Analysis Plot (PNG)",
+                        data=buf,
+                        file_name=f"{ticker}_analysis_plot.png",
+                        mime="image/png",
+                    )
+                    plt.close(plot)
+
+        st.header("Individual Stock Plots:")
+        for ticker, plot in st.session_state['plots'].items():
+            st.pyplot(plot)
+            plt.close(plot)
+
+    elif stock_symbols and st.button("Analyze Stocks") == False:
+        st.warning(
+            "Could not retrieve data or an error occurred for the entered symbols."
+        )
+
+if __name__ == "__main__":
+    main()
