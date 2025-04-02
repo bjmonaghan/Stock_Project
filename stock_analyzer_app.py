@@ -116,6 +116,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             last_data = history.tail(1)
             data_table = pd.DataFrame(
                 {
+                    'Company Name': long_name, # Add company name as a new column
                     'Buy Score': score,
                     'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name                    
                     'Current Price': current_price,
@@ -139,7 +140,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     "High Volatility Don't Buy": "Yes" if high_volatility and signal == "Don't Buy" else "No",
                     "High Volatility Sell": "Yes" if high_volatility and signal == "Sell" else "No",
                 },
-                index=[(ticker, long_name)],  # Create a multi-index with ticker and long name,
+                index=[ticker], 
             )
             data_table.index.name = "Stock Symbol"
             all_data = pd.concat([all_data, data_table])
