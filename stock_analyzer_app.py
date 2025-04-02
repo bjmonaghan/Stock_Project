@@ -141,7 +141,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                 },
                 index=[ticker],
             )
-            data_table.index.name = "Ticker"
+            data_table.index.name = "Stock Symbol"
             all_data = pd.concat([all_data, data_table])
 
             fig, axes = plt.subplots(3, 1, figsize=(16, 12))
