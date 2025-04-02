@@ -46,7 +46,10 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             info = stock.info
             current_price = info.get('currentPrice')
-
+            long_name = info.get('longName', ticker)
+            sector = info.get('sector')
+            pe_ratio = info.get('trailingPE')
+            dividend_yield = info.get('dividendYield')
             history['SMA_20'] = sma_indicator(close=history['Close'], window=20)
             history['SMA_50'] = sma_indicator(close=history['Close'], window=50)
             history['RSI'] = rsi(close=history['Close'], window=14)
@@ -116,9 +119,13 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             last_data = history.tail(1)
             data_table = pd.DataFrame(
                 {
-                    'Buy Score': score,
-                    'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name                    
+                    'Company':long_name,
+                    'Sector':sector,
+                    'Score': score,
+                    'Trade Signal': signal,  # changed name                    
                     'Current Price': current_price,
+                    'PE Ratio':pe_ratio,
+                    'Dividend Yield':dividend_yield,
                     'Close': last_data['Close'].values,
                     'SMA_20': last_data['SMA_20'].values,
                     'SMA_50': last_data['SMA_50'].values,
@@ -128,8 +135,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     'BB_upper': last_data['BB_upper'].values,
                     'BB_lower': last_data['BB_lower'].values,
                     'ATR': last_data['ATR'].values,
-                    'Buy Score': score,
-                    'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name
                     'SMA_20_above_SMA_50_Explanation': condition_explanations['SMA_20_above_SMA_50'],
                     'RSI_below_70_Explanation': condition_explanations['RSI_below_70'],
                     'MACD_above_signal_Explanation': condition_explanations['MACD_above_signal'],
