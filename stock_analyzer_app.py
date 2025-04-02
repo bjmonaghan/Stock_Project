@@ -17,7 +17,7 @@ def get_news_links(ticker):
         stock = yf.Ticker(ticker)
         news = stock.news
         if not news:  # Check if news is empty
-            print(f"No news found for {ticker} from yfinance.")
+            print(f"No news found for {ticker} from yfianance.")
             return []
         return news
     except Exception as e:
@@ -119,30 +119,30 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             last_data = history.tail(1)
             data_table = pd.DataFrame(
                 {
-                    'Company':long_name,
-                    'Sector':sector,
-                    'Score': score,
-                    'Trade Signal': signal,  # changed name                    
-                    'Current Price': current_price,
-                    'PE Ratio':pe_ratio,
-                    'Dividend Yield':dividend_yield,
-                    'Close': last_data['Close'].values,
-                    'SMA_20': last_data['SMA_20'].values,
-                    'SMA_50': last_data['SMA_50'].values,
-                    'RSI': last_data['RSI'].values,
-                    'MACD': last_data['MACD'].values,
-                    'MACD_signal': last_data['MACD_signal'].values,
-                    'BB_upper': last_data['BB_upper'].values,
-                    'BB_lower': last_data['BB_lower'].values,
-                    'ATR': last_data['ATR'].values,
-                    #'SMA_20_above_SMA_50_Explanation': condition_explanations['SMA_20_above_SMA_50'],
-                    #'RSI_below_70_Explanation': condition_explanations['RSI_below_70'],
-                    #'MACD_above_signal_Explanation': condition_explanations['MACD_above_signal'],
-                    #'Close_above_BB_lower_Explanation': condition_explanations['Close_above_BB_lower'],
-                    #'RSI_above_70_Explanation': condition_explanations['RSI_above_70'],
-                    #'MACD_below_signal_Explanation': condition_explanations['MACD_below_signal'],
-                    #"High Volatility Don't Buy": "Yes" if high_volatility and signal == "Don't Buy" else "No",
-                    #"High Volatility Sell": "Yes" if high_volatility and signal == "Sell" else "No",
+                    'Company': long_name,
+                    'Sector': sector,
+                    'Score': f"{score:.2f}",  # Formatted to 2 decimal places
+                    'Trade Signal': signal,  # changed name
+                    'Current Price': f"{current_price:.2f}", # Formatted to 2 decimal places
+                    'PE Ratio': f"{pe_ratio:.2f}", # Formatted to 2 decimal places
+                    'Dividend Yield': f"{dividend_yield:.2f}", # Formatted to 2 decimal places
+                    'Close': f"{last_data['Close'].values[0]:.2f}",
+                    'SMA_20': f"{last_data['SMA_20'].values[0]:.2f}",
+                    'SMA_50': f"{last_data['SMA_50'].values[0]:.2f}",
+                    'RSI': f"{last_data['RSI'].values[0]:.2f}",
+                    'MACD': f"{last_data['MACD'].values[0]:.2f}",
+                    'MACD_signal': f"{last_data['MACD_signal'].values[0]:.2f}",
+                    'BB_upper': f"{last_data['BB_upper'].values[0]:.2f}",
+                    'BB_lower': f"{last_data['BB_lower'].values[0]:.2f}",
+                    'ATR': f"{last_data['ATR'].values[0]:.2f}",
+                    # 'SMA_20_above_SMA_50_Explanation': condition_explanations['SMA_20_above_SMA_50'],
+                    # 'RSI_below_70_Explanation': condition_explanations['RSI_below_70'],
+                    # 'MACD_above_signal_Explanation': condition_explanations['MACD_above_signal'],
+                    # 'Close_above_BB_lower_Explanation': condition_explanations['Close_above_BB_lower'],
+                    # 'RSI_above_70_Explanation': condition_explanations['RSI_above_70'],
+                    # 'MACD_below_signal_Explanation': condition_explanations['MACD_below_signal'],
+                    # "High Volatility Don't Buy": "Yes" if high_volatility and signal == "Don't Buy" else "No",
+                    # "High Volatility Sell": "Yes" if high_volatility and signal == "Sell" else "No",
                 },
                 index=[ticker],
             )
@@ -252,10 +252,11 @@ def main():
             st.pyplot(plot)
             plt.close(plot)
 
-    elif stock_symbols and st.button("Analyze Stocks") == False :
+    elif stock_symbols and st.button("Analyze Stocks") == False:
         st.warning(
             "Could not retrieve data or an error occurred for the entered symbols."
         )
+
 
 if __name__ == "__main__":
     main()
