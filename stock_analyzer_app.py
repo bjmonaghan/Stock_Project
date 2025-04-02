@@ -193,9 +193,7 @@ def main():
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
-    analyze_button_clicked = st.button("Analyze Stocks") # store the result of the button click
-
-    if analyze_button_clicked:
+    if st.button("Analyze Stocks"):
         if not stock_symbols:
             st.warning("Please enter at least one stock symbol.")
             return
@@ -212,36 +210,37 @@ def main():
         if not all_data.empty:
             st.dataframe(all_data)
 
-    if 'all_data' in st.session_state and not st.session_state['all_data'].empty:
-        if export_option != "None":
-            if export_option in ["CSV", "All (CSV and Plots)"]:
-                csv_file = st.session_state['all_data'].to_csv().encode('utf-8')
-                st.download_button(
-                    label="Download Consolidated Data (CSV)",
-                    data=csv_file,
-                    file_name="consolidated_stock_analysis.csv",
-                    mime="text/csv",
-                )
-
-            if export_option == "All (CSV and Plots)":
-                for ticker, plot in st.session_state['plots'].items():
-                    buf = io.BytesIO()
-                    plot.savefig(buf, format='png')
-                    buf.seek(0)
+        if 'all_data' in st.session_state and not st.session_state['all_data'].empty:
+            if export_option != "None":
+                if export_option in ["CSV", "All (CSV and Plots)"]:
+                    csv_file = st.session_state['all_data'].to_csv().encode('utf-8')
                     st.download_button(
-                        label=f"Download {ticker} Analysis Plot (PNG)",
-                        data=buf,
-                        file_name=f"{ticker}_analysis_plot.png",
-                        mime="image/png",
+                        label="Download Consolidated Data (CSV)",
+                        data=csv_file,
+                        file_name="consolidated_stock_analysis.csv",
+                        mime="text/csv",
                     )
-                    plt.close(plot)
 
-        st.header("Individual Stock Plots:")
-        for ticker, plot in st.session_state['plots'].items():
-            st.pyplot(plot)
-            plt.close(plot)
+                if export_option == "All (CSV and Plots)":
+                    for ticker, plot in st.session_state['plots'].items():
+                        buf = io.BytesIO()
+                        plot.savefig(buf, format='png')
+                        buf.seek(0)
+                        st.download_button(
+                            label=f"Download {ticker} Analysis Plot (PNG)",
+                            data=buf,
+                            file_name=f"{ticker}_analysis_plot.png",
+                            mime="image/png",
+                        )
+                        plt.close(plot)
 
-    elif stock_symbols and not analyze_button_clicked: # use the stored result
-        st.warning(
-            "Could not retrieve data or an error occurred for the entered symbols."
-        )
+            st.header("Individual Stock Plots:")
+            for ticker, plot in st.session_state['plots'].items():
+                st.pyplot(plot)
+                plt.close(plot)
+
+    elif stock_symbols and ('all_data' not in st.session_state or st.session_state['all_data'].empty):
+        st.warning("Please press the Analyze Stocks button to perform the analysis.")
+
+if __name__ == "__main__":
+    main()
