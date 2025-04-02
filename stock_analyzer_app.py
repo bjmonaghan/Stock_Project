@@ -223,7 +223,8 @@ def main():
         st.session_state['analysis_performed'] = False
 
     # Analyze Stocks button
-    if st.button("Analyze Stocks"):
+    analyze_button_key = "analyze_stocks_button" # added key
+    if st.button("Analyze Stocks", key=analyze_button_key):
         if not stock_symbols:
             st.warning("Please enter at least one stock symbol.")
             return
@@ -256,6 +257,7 @@ def main():
                         data=csv_file,
                         file_name="consolidated_stock_analysis.csv",
                         mime="text/csv",
+                        key="download_csv_button" # added key
                     )
 
                 if export_option == "All (CSV and Plots)":
@@ -269,6 +271,7 @@ def main():
                                 data=buf,
                                 file_name=f"{ticker}_analysis_plot.png",
                                 mime="image/png",
+                                key=f"download_plot_{ticker}_button" # added key
                             )
                             plt.close(plot)
                     else:
