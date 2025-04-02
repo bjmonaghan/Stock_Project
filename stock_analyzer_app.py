@@ -139,7 +139,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     "High Volatility Don't Buy": "Yes" if high_volatility and signal == "Don't Buy" else "No",
                     "High Volatility Sell": "Yes" if high_volatility and signal == "Sell" else "No",
                 },
-                index=[ticker],
+                index=[{info.get('longName', ticker)} ({ticker})],
             )
             data_table.index.name = "Stock Symbol"
             all_data = pd.concat([all_data, data_table])
