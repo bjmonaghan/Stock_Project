@@ -46,6 +46,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             info = stock.info
             current_price = info.get('currentPrice')
+            long_name = info.get('longName', ticker)
 
             history['SMA_20'] = sma_indicator(close=history['Close'], window=20)
             history['SMA_50'] = sma_indicator(close=history['Close'], window=50)
@@ -116,9 +117,9 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             last_data = history.tail(1)
             data_table = pd.DataFrame(
                 {
-                    'Company Name': long_name, # Add company name as a new column
+                    'Company Name': long_name,  # Add company name as a new column
                     'Buy Score': score,
-                    'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name                    
+                    'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name
                     'Current Price': current_price,
                     'Close': last_data['Close'].values,
                     'SMA_20': last_data['SMA_20'].values,
@@ -129,8 +130,6 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     'BB_upper': last_data['BB_upper'].values,
                     'BB_lower': last_data['BB_lower'].values,
                     'ATR': last_data['ATR'].values,
-                    'Buy Score': score,
-                    'Buy/Don\'t Buy/Hold/Sell': signal,  # changed name
                     'SMA_20_above_SMA_50_Explanation': condition_explanations['SMA_20_above_SMA_50'],
                     'RSI_below_70_Explanation': condition_explanations['RSI_below_70'],
                     'MACD_above_signal_Explanation': condition_explanations['MACD_above_signal'],
@@ -140,9 +139,15 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                     "High Volatility Don't Buy": "Yes" if high_volatility and signal == "Don't Buy" else "No",
                     "High Volatility Sell": "Yes" if high_volatility and signal == "Sell" else "No",
                 },
-                index=[ticker], 
+                index=[ticker],
             )
             data_table.index.name = "Stock Symbol"
+
+            # Reorder columns to place company name before buy score.
+            cols = data_table.columns.tolist()
+            cols = cols[:1] + cols[2:]
+            data_table = data_table[[cols[0]] + ['Buy Score'] + cols[1:]]
+
             all_data = pd.concat([all_data, data_table])
 
             fig, axes = plt.subplots(3, 1, figsize=(16, 12))
@@ -153,7 +158,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             axes[0].plot(history['BB_upper'], label='Bollinger Upper Band')
             axes[0].plot(history['BB_lower'], label='Bollinger Lower Band')
             axes[0].set_title(
-                f"{info.get('longName', ticker)} ({ticker}): Price, Moving Averages, and Bollinger Bands\n"
+                f"{long_name} ({ticker}): Price, Moving Averages, and Bollinger Bands\n"
                 f"Bollinger Bands: Measure volatility. Prices near upper band may be overbought, near lower band may be oversold."
             )
             axes[0].set_ylabel('Price')
@@ -162,7 +167,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             axes[1].plot(history['RSI'], label='RSI')
             axes[1].set_title(
-                f"{info.get('longName', ticker)} ({ticker}): Relative Strength Index (RSI)\n"
+                f"{long_name} ({ticker}): Relative Strength Index (RSI)\n"
                 f"RSI: Measures the speed and change of price movements. Values above 70 indicate overbought conditions, below 30 indicate oversold."
             )
             axes[1].axhline(70, color='red', linestyle='--', label='Overbought (70)')
@@ -174,7 +179,7 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
             axes[2].plot(history['MACD'], label='MACD')
             axes[2].plot(history['MACD_signal'], label='MACD Signal')
             axes[2].set_title(
-                f"{info.get('longName', ticker)} ({ticker}): Moving Average Convergence Divergence (MACD)\n"
+                f"{long_name} ({ticker}): Moving Average Convergence Divergence (MACD)\n"
                 f"MACD: Shows changes in strength, direction, momentum, and duration of a trend. A bullish crossover occurs when MACD crosses above the signal line."
             )
             axes[2].set_ylabel('MACD')
@@ -248,10 +253,11 @@ def main():
             st.pyplot(plot)
             plt.close(plot)
 
-    elif stock_symbols and st.button("Analyze Stocks") == False :
+    elif stock_symbols and st.button("Analyze Stocks") == False:
         st.warning(
             "Could not retrieve data or an error occurred for the entered symbols."
         )
+
 
 if __name__ == "__main__":
     main()
