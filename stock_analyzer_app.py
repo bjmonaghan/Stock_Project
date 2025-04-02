@@ -9,7 +9,9 @@ from ta.momentum import rsi, stoch
 from ta.volume import OnBalanceVolumeIndicator
 from ta.utils import dropna
 
+
 def get_news_links(ticker):
+    """Fetches news links for a given stock ticker using yfinance."""
     try:
         stock = yf.Ticker(ticker)
         news = stock.news
@@ -21,9 +23,20 @@ def get_news_links(ticker):
         print(f"Error fetching news for {ticker}: {e}")
         return []
 
+
+
 def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
+    """
+    Performs complex stock analysis with a scoring system, weighted indicators,
+    and market condition adaptation, iterating over multiple stock tickers and
+    returning a consolidated table and plots.
+    """
     all_data = pd.DataFrame()
     plots = {}
+    
+    if not tickers:
+        st.warning("Please enter at least one stock symbol.")
+        return all_data, plots
 
     for ticker in tickers:
         try:
@@ -76,8 +89,10 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
             if high_volatility:
                 for key in ['RSI_below_70', 'RSI_above_70', 'MACD_below_signal']:
-                    if key in weights: weights[key] *= 1.2
-                if 'Close_above_BB_lower' in weights: weights['Close_above_BB_lower'] *= 0.8
+                    if key in weights:
+                        weights[key] *= 1.2
+                if 'Close_above_BB_lower' in weights:
+                    weights['Close_above_BB_lower'] *= 0.8
 
             score = 0
             conditions = {
@@ -89,7 +104,8 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
                 'MACD_below_signal': history['MACD'].iloc[-1] < history['MACD_signal'].iloc[-1],
                 'ADX_above_25': history['ADX'].iloc[-1] > 25,
                 'Stoch_K_above_D': history['Stoch_K'].iloc[-1] > history['Stoch_D'].iloc[-1],
-                'OBV_increasing': history['OBV'].iloc[-1] > history['OBV'].iloc[-2] if len(history) > 1 else False,
+                'OBV_increasing': history['OBV'].iloc[-1] > history['OBV'].iloc[-2] if len(
+                    history) > 1 else False,
             }
             condition_explanations = {k: "Met" if v else "Not Met" for k, v in conditions.items()}
 
@@ -180,19 +196,33 @@ def analyze_stocks_complex_with_scoring_consolidated(tickers, period="1y"):
 
         except Exception as e:
             st.error(f"An error occurred for {ticker}: {e}")
+            # Return empty dataframes in case of error to avoid crashing
+            return pd.DataFrame(), {}
 
     return all_data, plots
 
+
+
 def main():
+    """Main function to run the Streamlit app."""
     st.title("Stock Analysis App")
 
+    # Input for the stock symbols
     stock_symbols = st.text_input(
         "Enter stock symbols to analyze (comma-separated, e.g., AAPL,GOOG,MSFT):"
     ).upper()
 
+    # Input for the period
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
+    
+    # Input for the export option
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
+    # Initialize session state if it doesn't exist
+    if 'analysis_performed' not in st.session_state:
+        st.session_state['analysis_performed'] = False
+
+    # Analyze Stocks button
     if st.button("Analyze Stocks"):
         if not stock_symbols:
             st.warning("Please enter at least one stock symbol.")
@@ -203,14 +233,21 @@ def main():
             tickers, period=period
         )
 
+        # Store results in session state
         st.session_state['all_data'] = all_data
         st.session_state['plots'] = plots
+        st.session_state['analysis_performed'] = True  # Update analysis status
 
+        # Display consolidated analysis
         st.header("Consolidated Analysis:")
         if not all_data.empty:
             st.dataframe(all_data)
+        else:
+            st.warning("No data to display. Please check the stock symbols and try again.")
 
-        if 'all_data' in st.session_state and not st.session_state['all_data'].empty:
+    # Download results
+    if st.session_state['analysis_performed']:
+        if 'all_data' in st.session_state and not st.session_state['all_data'].empty: # check if all_data is in session state
             if export_option != "None":
                 if export_option in ["CSV", "All (CSV and Plots)"]:
                     csv_file = st.session_state['all_data'].to_csv().encode('utf-8')
@@ -222,25 +259,37 @@ def main():
                     )
 
                 if export_option == "All (CSV and Plots)":
-                    for ticker, plot in st.session_state['plots'].items():
-                        buf = io.BytesIO()
-                        plot.savefig(buf, format='png')
-                        buf.seek(0)
-                        st.download_button(
-                            label=f"Download {ticker} Analysis Plot (PNG)",
-                            data=buf,
-                            file_name=f"{ticker}_analysis_plot.png",
-                            mime="image/png",
-                        )
-                        plt.close(plot)
+                    if 'plots' in st.session_state: # Check if plots are in session state.
+                        for ticker, plot in st.session_state['plots'].items():
+                            buf = io.BytesIO()
+                            plot.savefig(buf, format='png')
+                            buf.seek(0)
+                            st.download_button(
+                                label=f"Download {ticker} Analysis Plot (PNG)",
+                                data=buf,
+                                file_name=f"{ticker}_analysis_plot.png",
+                                mime="image/png",
+                            )
+                            plt.close(plot)
+                    else:
+                        st.warning("No plots available to download.")
 
+            # Display plots
             st.header("Individual Stock Plots:")
-            for ticker, plot in st.session_state['plots'].items():
-                st.pyplot(plot)
-                plt.close(plot)
+            if 'plots' in st.session_state and st.session_state['plots']: # Check if plots are in session state
+                for ticker, plot in st.session_state['plots'].items():
+                    st.pyplot(plot)
+                    plt.close(plot)
+            else:
+                st.warning("No plots to display.")
+        else:
+             st.warning("No data to display. Please check the stock symbols and try again.")
 
-    elif stock_symbols and ('all_data' not in st.session_state or st.session_state['all_data'].empty):
+    # Display a warning message if no analysis has been performed
+    if stock_symbols and not st.session_state['analysis_performed']:
         st.warning("Please press the Analyze Stocks button to perform the analysis.")
+
+
 
 if __name__ == "__main__":
     main()
