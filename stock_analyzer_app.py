@@ -193,7 +193,9 @@ def main():
     period = st.selectbox("Select period:", ["1y", "6mo", "3mo", "1mo"])
     export_option = st.selectbox("Export Results:", ["None", "CSV", "All (CSV and Plots)"])
 
-    if st.button("Analyze Stocks"):
+    analyze_button_clicked = st.button("Analyze Stocks") # store the result of the button click
+
+    if analyze_button_clicked:
         if not stock_symbols:
             st.warning("Please enter at least one stock symbol.")
             return
@@ -239,10 +241,7 @@ def main():
             st.pyplot(plot)
             plt.close(plot)
 
-    elif stock_symbols and st.button("Analyze Stocks") == False:
+    elif stock_symbols and not analyze_button_clicked: # use the stored result
         st.warning(
             "Could not retrieve data or an error occurred for the entered symbols."
         )
-
-if __name__ == "__main__":
-    main()
