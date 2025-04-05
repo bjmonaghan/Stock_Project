@@ -1,1 +1,9 @@
-yfinancepandas numpy matplotlib streamlit ta
+yfinance
+pandas 
+numpy 
+matplotlib 
+streamlit 
+ta
+logging
+tabulate
+os
