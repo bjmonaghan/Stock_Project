@@ -4,6 +4,3 @@ numpy
 matplotlib 
 streamlit 
 ta
-logging
-tabulate
-os
